@@ -77,6 +77,18 @@ pub async fn view_paste(
 ) -> impl Responder {
     let title = title.into_inner();
 
+    // Increment the view count for the paste
+    let update_views_result = sqlx::query!(
+        "UPDATE pastes SET views = views + 1 WHERE title = $1",
+        title
+    )
+    .execute(pool.get_ref())
+    .await;
+
+    if let Err(e) = update_views_result {
+        eprintln!("Error updating view count: {:?}", e);
+    }
+
     // Fetch paste details
     let paste_result = sqlx::query!(
         "SELECT creator_username, title, content, created_at, views FROM pastes WHERE title = $1",
