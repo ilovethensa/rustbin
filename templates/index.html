@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <!-- Link to Simple.css stylesheet -->
+    <link rel="stylesheet" href="/static/simple.css">
+    <style>
+        /* Additional custom styles (if needed) */
+        #user-status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        div {
+            margin: 1rem 0;
+        }
+        a {
+            text-decoration: none;
+            color: var(--accent);
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        header {
+            background-color: var(--background);
+            padding: 1rem;
+        }
+        nav a {
+            margin: 0 0.5rem;
+        }
+        main {
+            padding: 1rem;
+        }
+        .paste {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .paste h2 {
+            margin: 0;
+        }
+        .paste p {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            {% if user_status == "Anonymous" %}
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            {% else %}
+                <a href="/create">Create</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        <h1>Welcome to the User Management System</h1>
+        <div id="user-status" class="notice">
+            <p>User status: <strong>{{ user_status }}</strong></p>
+        </div>
+
+        <h2>Latest Pastes</h2>
+        {% for paste in pastes %}
+            <div class="paste">
+                <h2>{{ paste.title }}</h2>
+                <p><strong>Created by:</strong> {{ paste.creator_username }}</p>
+                <p><strong>Created at:</strong> {{ paste.created_at }}</p>
+                <p><strong>Content:</strong> {{ paste.content }}</p>
+                <p><strong>Views:</strong> {{ paste.views }}</p>
+            </div>
+        {% else %}
+            <p>No pastes available.</p>
+        {% endfor %}
+    </main>
+</body>
+</html>

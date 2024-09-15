@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Paste</title>
+    <!-- Link to Simple.css stylesheet -->
+    <link rel="stylesheet" href="/static/simple.css">
+    <style>
+        /* Additional custom styles (if needed) */
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        form input, form textarea, form button {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        form button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            {% if user_status == "Anonymous" %}
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            {% else %}
+                <a href="/create">Create</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        <h1>Create a New Paste</h1>
+        <form action="/create" method="post">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required>
+
+            <label for="content">Content:</label>
+            <textarea id="content" name="content" rows="10" required></textarea>
+
+            <button type="submit">Create Paste</button>
+        </form>
+    </main>
+</body>
+</html>
