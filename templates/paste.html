@@ -5,23 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ paste.title }} - Pastebin</title>
+    <link rel="stylesheet" href="https://simplecss.eu/style.css">
     <style>
         body {
-            display: flex;
-            flex-direction: row;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
         }
 
         .content {
             flex: 1;
-            padding: 20px;
+            padding: 1rem;
         }
 
         .sidebar {
             width: 300px;
             background-color: #f4f4f4;
-            padding: 20px;
+            padding: 1rem;
             border-left: 1px solid #ddd;
         }
 
@@ -31,16 +34,44 @@
 
         .comments {
             border-top: 1px solid #ddd;
-            padding-top: 10px;
-            margin-top: 10px;
+            padding-top: 1rem;
+            margin-top: 1rem;
         }
 
         .comment {
-            margin-bottom: 10px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #e0e0e0;
+            /* Slightly darker than the sidebar background */
+            border-radius: 0.5rem;
+            /* Rounded corners */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            /* Subtle shadow for better separation */
         }
 
         .comment-form {
-            margin-top: 20px;
+            margin-top: 2rem;
+        }
+
+        form textarea {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+        }
+
+        form input[type="submit"],
+        form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+        }
+
+        form input[type="submit"]:hover,
+        form button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -69,8 +100,7 @@
         <div class="comment-form">
             <h3>Add a Comment</h3>
             <form action="/comment/{{ paste.title }}" method="post">
-                <textarea name="content" rows="4" cols="30" placeholder="Enter your comment here"
-                    required></textarea><br>
+                <textarea name="content" rows="4" placeholder="Enter your comment here" required></textarea>
                 <input type="submit" value="Submit">
             </form>
         </div>
