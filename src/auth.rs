@@ -110,6 +110,13 @@ async fn register(
 
 #[get("/logout")]
 async fn logout(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
+    // Check if the user is logged in, if not redirect to home
+    if user.is_none() {
+        return HttpResponse::Found()
+            .append_header(("LOCATION", "/"))
+            .finish();
+    }
+
     let user_status = user
         .and_then(|id| id.id().ok())
         .unwrap_or_else(|| "Anonymous".to_string());
@@ -117,13 +124,18 @@ async fn logout(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder
     let mut context = tera::Context::new();
     context.insert("user_status", &user_status);
 
+    // Render the logout confirmation page
     let rendered = tera.render("logout.html", &context).unwrap();
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
 
 #[post("/logout")]
-async fn logout_api(user: Identity) -> impl Responder {
-    user.logout();
+async fn logout_api(user: Option<Identity>) -> impl Responder {
+    if let Some(user) = user {
+        user.logout(); // Log the user out
+    }
+
+    // Redirect to home after logging out
     HttpResponse::Found()
         .append_header(("Location", "/"))
         .finish()

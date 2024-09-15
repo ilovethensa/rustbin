@@ -132,9 +132,15 @@ pub async fn view_paste(
     }
 }
 
-// Route to display the paste creation form
 #[get("/create")]
 pub async fn create_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
+    if user.is_none() {
+        // Redirect to login if not logged in
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
     let user_status = user
         .and_then(|id| id.id().ok())
         .unwrap_or_else(|| "Anonymous".to_string());
@@ -146,17 +152,20 @@ pub async fn create_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl 
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
 
-// Route to handle paste creation
 #[post("/create")]
 pub async fn create_paste(
     user: Option<Identity>,
     form: web::Form<CreatePasteForm>,
     pool: web::Data<PgPool>,
 ) -> impl Responder {
-    let username = user
-        .and_then(|id| id.id().ok())
-        .ok_or(HttpResponse::Unauthorized().body("Login required"))
-        .unwrap();
+    let username = if let Some(user) = user {
+        user.id().unwrap_or_else(|_| "Anonymous".to_string())
+    } else {
+        // Redirect to login if not logged in
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    };
 
     let result = sqlx::query!(
         "INSERT INTO pastes (creator_username, title, content) VALUES ($1, $2, $3)",

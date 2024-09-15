@@ -49,7 +49,13 @@ pub async fn create_comment(
     .await;
 
     match result {
-        Ok(_) => HttpResponse::Created().body("Comment added"),
+        Ok(_) => {
+            // Redirect to the paste page after comment creation
+            let redirect_url = format!("/paste/{}", paste_title); // Adjust the URL as needed
+            HttpResponse::Found()
+                .append_header(("Location", redirect_url))
+                .finish()
+        }
         Err(sqlx::Error::Database(err)) if err.message().contains("foreign key constraint") => {
             HttpResponse::BadRequest().body("Invalid paste title")
         }

@@ -12,7 +12,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       devShells.default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [rustc cargo gcc rustfmt clippy sqlx-cli];
+        nativeBuildInputs = with pkgs; [rustc cargo gcc rustfmt clippy sqlx-cli pkg-config openssl.dev];
 
         # Certain Rust tools won't work without this
         # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
