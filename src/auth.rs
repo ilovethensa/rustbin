@@ -77,7 +77,11 @@ async fn login(
 }
 
 #[post("/register")]
-async fn register(form: web::Form<RegisterForm>, pool: web::Data<sqlx::PgPool>) -> impl Responder {
+async fn register(
+    req: HttpRequest,
+    form: web::Form<RegisterForm>,
+    pool: web::Data<sqlx::PgPool>,
+) -> impl Responder {
     // Check if the username already exists
     let user_exists = sqlx::query("SELECT 1 FROM users WHERE username = $1")
         .bind(&form.username)
@@ -97,8 +101,9 @@ async fn register(form: web::Form<RegisterForm>, pool: web::Data<sqlx::PgPool>) 
             .await
             .unwrap();
 
+        Identity::login(&req.extensions(), form.username.clone()).unwrap();
         HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/"))
             .finish()
     }
 }
