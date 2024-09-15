@@ -1,36 +1,37 @@
-use actix_identity::{Identity, IdentityMiddleware};
-use actix_session::{SessionMiddleware, storage::CookieSessionStore};
-use actix_web::{cookie::Key, App, HttpRequest, HttpResponse, HttpServer, Responder, web, get, post, middleware::Logger};
 use actix_files as fs;
+use actix_identity::{Identity, IdentityMiddleware};
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_web::HttpMessage;
+use actix_web::{
+    cookie::Key, get, middleware::Logger, post, web, App, HttpRequest, HttpResponse, HttpServer,
+    Responder,
+};
+use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::FromRow;
 use tera::Tera;
-use actix_web::HttpMessage;
-use chrono::NaiveDateTime; // Import chrono
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, FromRow)]
 struct User {
-    username: String,
-    password: String
+    password: String,
 }
 
 #[derive(Deserialize)]
 struct LoginForm {
     username: String,
-    password: String
+    password: String,
 }
 
 #[derive(Deserialize)]
 struct RegisterForm {
     username: String,
-    password: String
+    password: String,
 }
 
 #[derive(Deserialize)]
 struct CreatePasteForm {
     title: String,
-    content: String
+    content: String,
 }
 
 #[derive(serde::Serialize)]
@@ -38,7 +39,7 @@ struct Paste {
     creator_username: String,
     title: String,
     content: String,
-    created_at: NaiveDateTime,
+    created_at: i64, // Unix timestamp
     views: i32,
 }
 
@@ -60,9 +61,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                .cookie_secure(false)
-                .build())
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_secure(false)
+                    .build(),
+            )
             .wrap(Logger::default())
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(tera.clone()))
@@ -76,7 +79,11 @@ async fn main() -> std::io::Result<()> {
             .service(create_form)
             .service(create_paste)
             .service(view_paste)
-            .service(fs::Files::new("/static", "./static").show_files_listing().use_last_modified(true))
+            .service(
+                fs::Files::new("/static", "./static")
+                    .show_files_listing()
+                    .use_last_modified(true),
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .workers(2)
@@ -85,30 +92,34 @@ async fn main() -> std::io::Result<()> {
 }
 
 #[get("/")]
-async fn index(user: Option<Identity>, tera: web::Data<Tera>, pool: web::Data<sqlx::PgPool>) -> impl Responder {
+async fn index(
+    user: Option<Identity>,
+    tera: web::Data<Tera>,
+    pool: web::Data<sqlx::PgPool>,
+) -> impl Responder {
     let user_status = user
         .and_then(|id| id.id().ok())
         .unwrap_or_else(|| "Anonymous".to_string());
 
     // Fetch pastes from the database and map to the Paste struct
-    let pastes = sqlx::query!(
-        "SELECT creator_username, title, content, created_at, views FROM pastes"
-    )
-    .fetch_all(pool.get_ref())
-    .await;
+    let pastes_result =
+        sqlx::query!("SELECT creator_username, title, content, created_at, views FROM pastes")
+            .fetch_all(pool.get_ref())
+            .await;
 
     let mut context = tera::Context::new();
     context.insert("user_status", &user_status);
+    let default_datetime = 0; // Default Unix timestamp value
 
-    match pastes {
+    match pastes_result {
         Ok(pastes) => {
-            // Ensure non-optional values by using `map`
-            let pastes: Vec<Paste> = pastes.into_iter()
+            let pastes: Vec<Paste> = pastes
+                .into_iter()
                 .map(|paste| Paste {
                     creator_username: paste.creator_username,
                     title: paste.title,
                     content: paste.content,
-                    created_at: paste.created_at.unwrap_or(NaiveDateTime::from_timestamp(0, 0)),
+                    created_at: paste.created_at.unwrap() as i64, // Apply default datetime
                     views: paste.views.unwrap_or(0),
                 })
                 .collect();
@@ -116,7 +127,6 @@ async fn index(user: Option<Identity>, tera: web::Data<Tera>, pool: web::Data<sq
             context.insert("pastes", &pastes);
         }
         Err(_) => {
-            // Insert an empty vector if the query fails
             context.insert("pastes", &Vec::<Paste>::new());
         }
     }
@@ -138,7 +148,9 @@ async fn view_paste(title: web::Path<String>, pool: web::Data<sqlx::PgPool>) -> 
     .await;
 
     match result {
-        Ok(Some(paste)) => HttpResponse::Ok().content_type("text/plain").body(paste.content),
+        Ok(Some(paste)) => HttpResponse::Ok()
+            .content_type("text/plain")
+            .body(paste.content),
         Ok(None) => HttpResponse::NotFound().body("Paste not found"),
         Err(_) => HttpResponse::InternalServerError().body("Error fetching paste"),
     }
@@ -151,22 +163,16 @@ async fn login(
     pool: web::Data<sqlx::PgPool>,
 ) -> impl Responder {
     // Query user from the database
-    let user = sqlx::query_as::<_, User>(
-        "SELECT username, password FROM users WHERE username = $1"
-    )
-    .bind(&form.username)
-    .fetch_optional(pool.get_ref())
-    .await;
+    let user = sqlx::query_as::<_, User>("SELECT password FROM users WHERE username = $1")
+        .bind(&form.username)
+        .fetch_optional(pool.get_ref())
+        .await;
 
     match user {
         Ok(Some(user)) if user.password == form.password => {
-            // Assuming you have a way to handle session management and authentication
-            // Here we use Identity to handle login
             Identity::login(&req.extensions(), form.username.clone()).unwrap();
-
-            // Redirect to home page on successful login
             HttpResponse::Found()
-                .header("Location", "/")
+                .append_header(("Location", "/"))
                 .finish()
         }
         Ok(Some(_)) => HttpResponse::Unauthorized().body("Invalid password"),
@@ -175,12 +181,8 @@ async fn login(
     }
 }
 
-
 #[post("/register")]
-async fn register(
-    form: web::Form<RegisterForm>,
-    pool: web::Data<sqlx::PgPool>,
-) -> impl Responder {
+async fn register(form: web::Form<RegisterForm>, pool: web::Data<sqlx::PgPool>) -> impl Responder {
     // Check if the username already exists
     let user_exists = sqlx::query("SELECT 1 FROM users WHERE username = $1")
         .bind(&form.username)
@@ -200,35 +202,30 @@ async fn register(
             .await
             .unwrap();
 
-        // Redirect to login page or another page
         HttpResponse::Found()
-            .header("Location", "/login")
+            .append_header(("Location", "/login"))
             .finish()
     }
 }
 
 #[get("/logout")]
 async fn logout(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
-    // Check if the user is logged in
     let user_status = user
         .and_then(|id| id.id().ok())
         .unwrap_or_else(|| "Anonymous".to_string());
 
-    // Prepare context for the template
     let mut context = tera::Context::new();
     context.insert("user_status", &user_status);
 
-    // Render the confirmation template
     let rendered = tera.render("logout.html", &context).unwrap();
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
-
 
 #[post("/logout")]
 async fn logout_api(user: Identity) -> impl Responder {
     user.logout();
     HttpResponse::Found()
-        .header("Location", "/")
+        .append_header(("Location", "/"))
         .finish()
 }
 
@@ -236,7 +233,7 @@ async fn logout_api(user: Identity) -> impl Responder {
 async fn login_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
     if user.is_some() {
         return HttpResponse::Found()
-            .header("LOCATION", "/")
+            .append_header(("LOCATION", "/"))
             .finish();
     }
 
@@ -247,13 +244,11 @@ async fn login_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Respo
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
 
-
-
 #[get("/register")]
 async fn register_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
     if user.is_some() {
         return HttpResponse::Found()
-            .header("LOCATION", "/")
+            .append_header(("LOCATION", "/"))
             .finish();
     }
 
@@ -263,8 +258,6 @@ async fn register_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Re
     let rendered = tera.render("register.html", &context).unwrap();
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
-
-
 
 #[get("/create")]
 async fn create_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Responder {
@@ -279,20 +272,24 @@ async fn create_form(user: Option<Identity>, tera: web::Data<Tera>) -> impl Resp
     HttpResponse::Ok().content_type("text/html").body(rendered)
 }
 
-
 #[post("/create")]
-async fn create_paste(user: Option<Identity>, form: web::Form<CreatePasteForm>, pool: web::Data<sqlx::PgPool>) -> impl Responder {
+async fn create_paste(
+    user: Option<Identity>,
+    form: web::Form<CreatePasteForm>,
+    pool: web::Data<sqlx::PgPool>,
+) -> impl Responder {
     let username = user
         .and_then(|id| id.id().ok())
         .ok_or(HttpResponse::Unauthorized().body("Login required"))
         .unwrap();
 
-    let result = sqlx::query("INSERT INTO pastes (creator_username, title, content) VALUES ($1, $2, $3)")
-        .bind(&username)
-        .bind(&form.title)
-        .bind(&form.content)
-        .execute(pool.get_ref())
-        .await;
+    let result =
+        sqlx::query("INSERT INTO pastes (creator_username, title, content) VALUES ($1, $2, $3)")
+            .bind(&username)
+            .bind(&form.title)
+            .bind(&form.content)
+            .execute(pool.get_ref())
+            .await;
 
     match result {
         Ok(_) => HttpResponse::Created().body("Paste created"),

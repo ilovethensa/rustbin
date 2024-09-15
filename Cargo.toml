@@ -17,6 +17,5 @@ sqlx = { version = "0.8", features = [
     "tls-native-tls",
     "postgres",
     "migrate",
-    "chrono",
 ] }
 chrono = { version = "0.4", features = ["serde"] }

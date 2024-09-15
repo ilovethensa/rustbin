@@ -12,15 +12,13 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       devShells.default = pkgs.mkShell {
-        packages = with pkgs; [
-          cargo
-          rustc
-          bacon
-          gcc
-          cargo-watch
-          pkg-config
-          openssl.dev
-        ];
+        nativeBuildInputs = with pkgs; [rustc cargo gcc rustfmt clippy sqlx-cli];
+
+        # Certain Rust tools won't work without this
+        # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
+        # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+        DYLIB_LIBRARY_PATH = "${pkgs.pjsip}/lib";
       };
     });
 }
