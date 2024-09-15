@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO comments (creator_username, content, paste_id, created_at) VALUES ($1, $2, (SELECT id FROM pastes WHERE title = $3), $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bf0fd22fc207ba139cc9be5032b7a7a34e876278ba1776f75805395db7a9250e"
+}

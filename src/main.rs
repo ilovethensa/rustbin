@@ -2,6 +2,7 @@ use actix_files as fs;
 use actix_identity::IdentityMiddleware;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
+use std::env;
 use tera::Tera;
 
 mod auth; // Assuming you have an auth module
@@ -13,9 +14,12 @@ mod utils;
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
+    // Fetch the database URL from the environment variable
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://postgres:postgres@localhost/rustbin")
+        .connect(&database_url)
         .await
         .unwrap();
 

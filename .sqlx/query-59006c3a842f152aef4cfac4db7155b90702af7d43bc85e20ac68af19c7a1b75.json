@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pastes SET views = views + 1 WHERE title = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "59006c3a842f152aef4cfac4db7155b90702af7d43bc85e20ac68af19c7a1b75"
+}
