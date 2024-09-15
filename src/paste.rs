@@ -1,7 +1,7 @@
 use crate::comments::Comment;
+use crate::utils;
 use actix_identity::Identity;
 use actix_web::{get, post, web, HttpResponse, Responder};
-use regex::Regex;
 use serde::Deserialize;
 use sqlx::PgPool;
 use tera::Tera;
@@ -21,12 +21,6 @@ pub struct Paste {
     created_at: i64, // Unix timestamp
     views: i32,
     comments: Vec<Comment>, // Comments related to the paste
-}
-
-// Helper function to validate the title
-fn is_valid_title(title: &str) -> bool {
-    let re = Regex::new(r"^[a-zA-Z0-9._()]*$").unwrap();
-    re.is_match(title)
 }
 
 #[get("/")]
@@ -173,7 +167,7 @@ pub async fn create_paste(
     };
 
     // Validate title
-    if !is_valid_title(&form.title) {
+    if !utils::is_valid_title(&form.title) {
         return HttpResponse::BadRequest()
             .body("Invalid title characters, only use letters, numbers and _ . ( )");
     }
@@ -202,7 +196,12 @@ pub async fn create_paste(
     .await;
 
     match result {
-        Ok(_) => HttpResponse::Created().body("Paste created"),
+        Ok(_) => {
+            // Redirect to the newly created paste
+            HttpResponse::Found()
+                .append_header(("Location", format!("/paste/{}", form.title)))
+                .finish()
+        }
         Err(sqlx::Error::Database(err)) if err.message().contains("unique_violation") => {
             HttpResponse::Conflict().body("Paste with this title already exists")
         }

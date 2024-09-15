@@ -7,6 +7,7 @@ use tera::Tera;
 mod auth; // Assuming you have an auth module
 mod comments;
 mod paste;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

@@ -1,12 +1,16 @@
 use actix_identity::Identity;
 use actix_web::{get, post, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use bcrypt::{hash, verify, DEFAULT_COST};
 use serde::Deserialize;
 use sqlx::FromRow;
 use tera::Tera;
 
+use crate::utils::is_valid_title;
+
 #[derive(Debug, Clone, FromRow)]
 struct User {
-    password: String,
+    username: String,
+    password: String, // Using existing password field for hashed passwords
 }
 
 #[derive(Deserialize)]
@@ -57,14 +61,20 @@ async fn login(
     form: web::Form<LoginForm>,
     pool: web::Data<sqlx::PgPool>,
 ) -> impl Responder {
+    // Validate username
+    if !is_valid_title(&form.username) {
+        return HttpResponse::BadRequest().body("Invalid username format");
+    }
+
     // Query user from the database
-    let user = sqlx::query_as::<_, User>("SELECT password FROM users WHERE username = $1")
-        .bind(&form.username)
-        .fetch_optional(pool.get_ref())
-        .await;
+    let user =
+        sqlx::query_as::<_, User>("SELECT username, password FROM users WHERE username = $1")
+            .bind(&form.username)
+            .fetch_optional(pool.get_ref())
+            .await;
 
     match user {
-        Ok(Some(user)) if user.password == form.password => {
+        Ok(Some(user)) if verify(&form.password, &user.password).unwrap() => {
             Identity::login(&req.extensions(), form.username.clone()).unwrap();
             HttpResponse::Found()
                 .append_header(("Location", "/"))
@@ -82,6 +92,11 @@ async fn register(
     form: web::Form<RegisterForm>,
     pool: web::Data<sqlx::PgPool>,
 ) -> impl Responder {
+    // Validate username
+    if !is_valid_title(&form.username) {
+        return HttpResponse::BadRequest().body("Invalid username format");
+    }
+
     // Check if the username already exists
     let user_exists = sqlx::query("SELECT 1 FROM users WHERE username = $1")
         .bind(&form.username)
@@ -93,10 +108,13 @@ async fn register(
     if user_exists {
         HttpResponse::Conflict().body("User exists")
     } else {
+        // Hash the password before inserting it into the database
+        let password_hash = hash(&form.password, DEFAULT_COST).unwrap();
+
         // Insert the new user into the database
         sqlx::query("INSERT INTO users (username, password) VALUES ($1, $2)")
             .bind(&form.username)
-            .bind(&form.password)
+            .bind(&password_hash)
             .execute(pool.get_ref())
             .await
             .unwrap();
