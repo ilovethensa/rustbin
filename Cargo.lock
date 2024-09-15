@@ -1931,6 +1931,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "lazy_static",
+ "regex",
  "serde",
  "sqlx",
  "tera",

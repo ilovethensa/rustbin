@@ -1,10 +1,10 @@
 use crate::comments::Comment;
 use actix_identity::Identity;
 use actix_web::{get, post, web, HttpResponse, Responder};
+use regex::Regex;
 use serde::Deserialize;
 use sqlx::PgPool;
 use tera::Tera;
-
 // Data structure for creating a paste
 #[derive(Deserialize)]
 pub struct CreatePasteForm {
@@ -21,6 +21,12 @@ pub struct Paste {
     created_at: i64, // Unix timestamp
     views: i32,
     comments: Vec<Comment>, // Comments related to the paste
+}
+
+// Helper function to validate the title
+fn is_valid_title(title: &str) -> bool {
+    let re = Regex::new(r"^[a-zA-Z0-9._()]*$").unwrap();
+    re.is_match(title)
 }
 
 #[get("/")]
@@ -161,12 +167,31 @@ pub async fn create_paste(
     let username = if let Some(user) = user {
         user.id().unwrap_or_else(|_| "Anonymous".to_string())
     } else {
-        // Redirect to login if not logged in
         return HttpResponse::Found()
             .append_header(("Location", "/login"))
             .finish();
     };
 
+    // Validate title
+    if !is_valid_title(&form.title) {
+        return HttpResponse::BadRequest()
+            .body("Invalid title characters, only use letters, numbers and _ . ( )");
+    }
+
+    // Check if a paste with the given title already exists
+    let paste_exists = sqlx::query!(
+        "SELECT EXISTS (SELECT 1 FROM pastes WHERE title = $1)",
+        form.title
+    )
+    .fetch_one(pool.get_ref())
+    .await
+    .map_or(false, |row| row.exists.unwrap());
+
+    if paste_exists {
+        return HttpResponse::Conflict().body("Paste with this title already exists");
+    }
+
+    // Proceed to insert the new paste
     let result = sqlx::query!(
         "INSERT INTO pastes (creator_username, title, content) VALUES ($1, $2, $3)",
         username,
@@ -178,7 +203,7 @@ pub async fn create_paste(
 
     match result {
         Ok(_) => HttpResponse::Created().body("Paste created"),
-        Err(sqlx::Error::Database(err)) if err.message().contains("duplicate key value") => {
+        Err(sqlx::Error::Database(err)) if err.message().contains("unique_violation") => {
             HttpResponse::Conflict().body("Paste with this title already exists")
         }
         Err(_) => HttpResponse::InternalServerError().body("Error creating paste"),
