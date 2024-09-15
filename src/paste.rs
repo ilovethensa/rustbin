@@ -1,6 +1,5 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use serde::Deserialize;
-use sqlx::FromRow;
 use tera::Tera;
 
 #[derive(Deserialize)]
@@ -16,15 +15,6 @@ struct Paste {
     content: String,
     created_at: i64, // Unix timestamp
     views: i32,
-}
-
-#[derive(Debug, Clone, FromRow)]
-struct PasteRow {
-    creator_username: String,
-    title: String,
-    content: String,
-    created_at: Option<i64>, // Unix timestamp
-    views: Option<i32>,
 }
 
 #[get("/")]

@@ -1,7 +1,7 @@
 use actix_files as fs;
-use actix_identity::{Identity, IdentityMiddleware};
+use actix_identity::IdentityMiddleware;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, get, middleware::Logger, web, App, HttpServer};
+use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
 use tera::Tera;
 
 mod auth;
