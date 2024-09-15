@@ -20,3 +20,11 @@ CREATE TABLE IF NOT EXISTS pastes (
     views INTEGER DEFAULT 0,
     created_at INTEGER DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
 );
+
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    creator_username VARCHAR(255) NOT NULL REFERENCES users(username),
+    paste_id INTEGER NOT NULL REFERENCES pastes(id),
+    content TEXT NOT NULL,
+    created_at BIGINT NOT NULL
+);

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ paste.title }} - Pastebin</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-left: 1px solid #ddd;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+        }
+
+        .comments {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .comment {
+            margin-bottom: 10px;
+        }
+
+        .comment-form {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <pre>{{ paste.content }}</pre>
+    </div>
+    <div class="sidebar">
+        <h2>Details</h2>
+        <p><strong>Creator:</strong> {{ paste.creator_username }}</p>
+        <p><strong>Title:</strong> {{ paste.title }}</p>
+        <p><strong>Views:</strong> {{ paste.views }}</p>
+        <div class="comments">
+            <h3>Comments</h3>
+            {% for comment in paste.comments %}
+            <div class="comment">
+                <p><strong>{{ comment.creator_username }}:</strong></p>
+                <p>{{ comment.content }}</p>
+            </div>
+            {% else %}
+            <p>No comments yet.</p>
+            {% endfor %}
+        </div>
+        {% if user_status != "Anonymous" %}
+        <div class="comment-form">
+            <h3>Add a Comment</h3>
+            <form action="/comment/{{ paste.title }}" method="post">
+                <textarea name="content" rows="4" cols="30" placeholder="Enter your comment here"
+                    required></textarea><br>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

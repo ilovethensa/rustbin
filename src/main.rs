@@ -4,7 +4,8 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware::Logger, web, App, HttpServer};
 use tera::Tera;
 
-mod auth;
+mod auth; // Assuming you have an auth module
+mod comments;
 mod paste;
 
 #[actix_web::main]
@@ -39,10 +40,14 @@ async fn main() -> std::io::Result<()> {
             .service(auth::logout)
             .service(auth::logout_api)
             .service(auth::register)
+            .service(paste::index)
+            .service(paste::view_paste)
             .service(paste::create_form)
             .service(paste::create_paste)
-            .service(paste::view_paste)
-            .service(paste::index)
+            .service(
+                web::resource("/comment/{paste_id}")
+                    .route(web::post().to(comments::create_comment)),
+            )
             .service(
                 fs::Files::new("/static", "./static")
                     .show_files_listing()
