@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,46 +16,61 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
         div {
             margin: 1rem 0;
         }
+
         a {
             text-decoration: none;
             color: var(--accent);
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         header {
             background-color: var(--background);
             padding: 1rem;
         }
+
         nav a {
             margin: 0 0.5rem;
         }
+
         main {
             padding: 1rem;
-            text-align: center; /* Center the logo and main content */
+            text-align: center;
+            /* Center the logo and main content */
         }
+
         .logo img {
-            width: 50%; /* Scale the logo to 50% of its container */
-            height: auto; /* Maintain aspect ratio */
+            width: 50%;
+            /* Scale the logo to 50% of its container */
+            height: auto;
+            /* Maintain aspect ratio */
         }
+
         .paste {
             border: 1px solid #ddd;
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
-            text-align: left; /* Align paste content to the left */
+            text-align: left;
+            /* Align paste content to the left */
         }
+
         .paste h2 {
             margin: 0;
         }
+
         .paste p {
             margin: 0.5rem 0;
         }
     </style>
 </head>
+
 <body>
     {% include "components/header.html.tera" %}
 
@@ -69,16 +85,16 @@
 
         <h2>Latest Pastes</h2>
         {% for paste in pastes %}
-            <div class="paste">
-                <h2><a href="/paste/{{ paste.title }}">{{ paste.title }}</a></h2>
-                <p><strong>Created by:</strong> {{ paste.creator_username }}</p>
-                <p><strong>Created at:</strong> {{ paste.created_at }}</p>
-                <p><strong>Content:</strong> {{ paste.content }}</p>
-                <p><strong>Views:</strong> {{ paste.views }}</p>
-            </div>
+        <div class="paste">
+            <h2><a href="/paste/{{ paste.title }}">{{ paste.title }}</a></h2>
+            <p><strong>Created by:</strong> {{ paste.creator_username }}</p>
+            <p><strong>Created at:</strong> {{ paste.created_at }}</p>
+            <p><strong>Views:</strong> {{ paste.views }}</p>
+        </div>
         {% else %}
-            <p>No pastes available.</p>
+        <p>No pastes available.</p>
         {% endfor %}
     </main>
 </body>
+
 </html>

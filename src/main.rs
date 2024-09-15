@@ -53,6 +53,7 @@ async fn main() -> std::io::Result<()> {
                     .show_files_listing()
                     .use_last_modified(true),
             )
+            .app_data(web::FormConfig::default().limit(64 * 1024 * 1024))
     })
     .bind("127.0.0.1:8080")?
     .workers(2)
