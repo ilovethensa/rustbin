@@ -19,3 +19,4 @@ sqlx = { version = "0.8", features = [
     "migrate",
     "chrono",
 ] }
+chrono = { version = "0.4", features = ["serde"] }

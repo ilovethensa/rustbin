@@ -39,17 +39,7 @@
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="/">Home</a>
-            {% if user_status == "Anonymous" %}
-                <a href="/login">Login</a>
-                <a href="/register">Register</a>
-            {% else %}
-                <a href="/create">Create</a>
-            {% endif %}
-        </nav>
-    </header>
+    {% include "components/header.html.tera" %}
 
     <main>
         <h1>Create a New Paste</h1>

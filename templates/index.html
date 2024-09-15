@@ -34,12 +34,18 @@
         }
         main {
             padding: 1rem;
+            text-align: center; /* Center the logo and main content */
+        }
+        .logo img {
+            width: 50%; /* Scale the logo to 50% of its container */
+            height: auto; /* Maintain aspect ratio */
         }
         .paste {
             border: 1px solid #ddd;
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
+            text-align: left; /* Align paste content to the left */
         }
         .paste h2 {
             margin: 0;
@@ -50,20 +56,13 @@
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="/">Home</a>
-            {% if user_status == "Anonymous" %}
-                <a href="/login">Login</a>
-                <a href="/register">Register</a>
-            {% else %}
-                <a href="/create">Create</a>
-            {% endif %}
-        </nav>
-    </header>
+    {% include "components/header.html.tera" %}
 
     <main>
-        <h1>Welcome to the User Management System</h1>
+        <div class="logo">
+            <img src="/static/logo.png" alt="Logo" />
+        </div>
+        <h1>RustBin</h1>
         <div id="user-status" class="notice">
             <p>User status: <strong>{{ user_status }}</strong></p>
         </div>
@@ -71,7 +70,7 @@
         <h2>Latest Pastes</h2>
         {% for paste in pastes %}
             <div class="paste">
-                <h2>{{ paste.title }}</h2>
+                <h2><a href="/paste/{{ paste.title }}">{{ paste.title }}</a></h2>
                 <p><strong>Created by:</strong> {{ paste.creator_username }}</p>
                 <p><strong>Created at:</strong> {{ paste.created_at }}</p>
                 <p><strong>Content:</strong> {{ paste.content }}</p>
